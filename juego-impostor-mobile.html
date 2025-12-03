@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>El Impostor - Mobile</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+            animation: slideIn 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            flex: 1;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            border-radius: 0 0 30px 30px;
+            margin: -20px -20px 20px -20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: 700;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .participant-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .theme-card {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 1em;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-card.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .theme-card.random {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+            border-color: #ffd89b;
+            font-weight: 700;
+        }
+
+        .theme-card.random.selected {
+            background: linear-gradient(135deg, #19547b 0%, #ffd89b 100%);
+            transform: scale(1.08);
+            box-shadow: 0 8px 20px rgba(25, 84, 123, 0.4);
+        }
+
+        .impostor-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .impostor-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .impostor-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Cortina interactiva - Versión discreta */
+        .reveal-screen {
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .reveal-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .reveal-header h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .reveal-header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .reveal-card-container {
+            width: 100%;
+            max-width: 350px;
+            perspective: 1000px;
+        }
+
+        .reveal-card {
+            background: white;
+            border-radius: 24px;
+            padding: 0;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            touch-action: none;
+            user-select: none;
+        }
+
+        .secret-content-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            z-index: 1;
+        }
+
+        .secret-label {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .word-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%);
+            width: 100%;
+            word-wrap: break-word;
+        }
+
+        .word-display.impostor {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            font-size: 2em;
+        }
+
+        .theme-tag {
+            background: #667eea;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .cover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            z-index: 2;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            will-change: transform;
+        }
+
+        .cover-overlay:active {
+            cursor: grabbing;
+        }
+
+        .cover-overlay.released {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cover-content {
+            text-align: center;
+            color: white;
+            pointer-events: none;
+        }
+
+        .swipe-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            animation: swipeUp 2s ease-in-out infinite;
+        }
+
+        @keyframes swipeUp {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .swipe-text {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .swipe-instruction {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        .reveal-progress {
+            width: 60px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .reveal-progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.1s linear;
+        }
+
+        .next-button-container {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .reveal-toggle-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .reveal-toggle-btn:active {
+            transform: scale(0.98);
+        }
+
+        .reveal-toggle-btn.showing {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        /* Turnos */
+        .turn-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        /* Votación */
+        .vote-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .vote-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .vote-count-badge {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 20px;
+            height: 30px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.5s ease;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 20px;
+            margin: 20px;
+            max-width: 400px;
+            width: calc(100% - 40px);
+            text-align: center;
+            animation: scaleIn 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-emoji {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .modal-content p {
+            color: #666;
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .modal-buttons .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .modal-buttons .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .eliminated-badge {
+            opacity: 0.5;
+            position: relative;
+        }
+
+        .eliminated-badge::after {
+            content: '❌';
+            position: absolute;
+            right: 15px;
+            font-size: 1.5em;
+        }
+
+        .winner-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .winner-emoji {
+            font-size: 6em;
+            animation: pulse 1s infinite;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .winner-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .final-word {
+            font-size: 1.5em;
+            color: white;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .player-role-item {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .player-role-item.impostor {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .player-role-item.innocent {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reset-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reset-btn:active,
+        .back-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .eliminations-selector {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .eliminations-selector h3 {
+            color: white;
+            font-size: 1em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .footer {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            font-size: 0.85em;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+            width: 100%;
+        }
+
+        .footer-content {
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        .footer-title {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-email {
+            font-size: 0.85em;
+            opacity: 0.85;
+            margin-top: 8px;
+            color: #e0e0e0;
+        }
+
+        .footer-email a {
+            color: #ffffff;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .footer-email a:hover {
+            opacity: 0.7;
+            text-decoration: underline;
+        }
+
+        .footer-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .footer-year {
+            margin-top: 8px;
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+
+        .custom-category-btn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+        }
+
+        .custom-category-btn:active {
+            transform: scale(0.98);
+        }
+
+        .custom-category-item {
+            background: rgba(67, 233, 123, 0.2);
+            border: 2px solid #43e97b;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-category-info {
+            flex: 1;
+        }
+
+        .custom-category-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .custom-category-count {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .delete-category-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .modal-input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .modal-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .modal-input-group input,
+        .modal-input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .modal-input-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-input-group input:focus,
+        .modal-input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .emoji-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .emoji-option {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .emoji-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            transform: scale(1.1);
+        }
+
+        .emoji-option:hover {
+            transform: scale(1.05);
+        }
+
+        .helper-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 70px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            font-size: 1.3em;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .menu-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 80px 20px 20px 20px;
+        }
+
+        .menu-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideInLeft 0.3s ease;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .menu-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .menu-close {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .menu-item:active {
+            transform: scale(0.98);
+        }
+
+        .menu-item-icon {
+            font-size: 1.3em;
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 15px 0;
+        }
+
+        .menu-section-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const THEMES = {
+            '🎲 Al Azar': [], // Esta se llenará dinámicamente
+            '🎉 Fiesta': [
+                'Cumpleaños', 'Boda', 'Graduación', 'Año Nuevo', 'Halloween', 
+                'Quinceañera', 'Baby Shower', 'Navidad', 'Carnaval', 'Despedida de Soltero',
+                'Aniversario', 'Fiesta de Disfraces', 'Pool Party', 'Nochevieja',
+                'Bautizo', 'Comunión', 'Primera Comunión', 'Fiesta Sorpresa', 'Despedida de Soltera',
+                'San Valentín', 'Día de la Madre', 'Día del Padre', 'Pascua', 'Día de los Difuntos',
+                'Fiesta de Pijamas', 'Fiesta en la Playa', 'Fiesta Temática', 'Rodeo Montubio',
+                'Cena de Gala', 'Brunch', 'Parrillada', 'Picnic', 'Karaoke',
+                'Cocktail Party', 'Fiesta de Jardín', 'Fiestas de Quito', 'Fiestas de Guayaquil',
+                'Independencia', 'Día del Trabajo', 'Carnaval de Guaranda', 'Inti Raymi',
+                'Yamor', 'Mama Negra', 'Fin de Año', 'Noche Buena', 'Velorio del Año Viejo',
+                'Matrimonio', 'Pedida de Mano', 'Luna de Miel', 'Jubilación', 'Inauguración'
+            ],
+            '🍔 Comida': [
+                'Encebollado', 'Ceviche', 'Hornado', 'Fritada', 'Guatita', 
+                'Seco de Chivo', 'Arroz con Menestra', 'Bolón de Verde', 'Corviche', 'Empanadas de Verde',
+                'Tigrillo', 'Maduro con Queso', 'Chaulafán', 'Caldo de Bola', 'Caldo de Pata',
+                'Yaguarlocro', 'Locro de Papa', 'Fanesca', 'Sancocho', 'Aguado de Gallina',
+                'Arroz con Pollo', 'Seco de Pollo', 'Apanado de Pollo', 'Churrasco', 'Llapingachos',
+                'Mote Pillo', 'Mote con Chicharrón', 'Cuy Asado', 'Fritada con Mote', 'Humitas',
+                'Quimbolitos', 'Tamales', 'Hayacas', 'Muchines', 'Empanadas de Viento',
+                'Salchipapas', 'Hot Dog', 'Hamburguesa', 'Pizza', 'Sushi',
+                'Arroz Marinero', 'Encocado', 'Sudado de Pescado', 'Corvina Frita', 'Camarones al Ajillo',
+                'Caldo de Manguera', 'Tripita', 'Bollo de Pescado', 'Pan de Yuca', 'Roscas',
+                'Tostado', 'Canguil', 'Chifles', 'Patacones', 'Maduros Fritos'
+            ],
+            '🍰 Postres': [
+                'Tres Leches', 'Espumilla', 'Helado de Paila', 'Dulce de Higos', 'Quesadilla', 
+                'Colada Morada', 'Arroz con Leche', 'Torta Negra', 'Suspiros', 'Alfajores',
+                'Pristiños', 'Buñuelos', 'Empanadas de Morocho', 'Cocada', 'Melcocha',
+                'Nogada', 'Mazapán', 'Manjar de Leche', 'Dulce de Guayaba', 'Dulce de Babaco',
+                'Mermelada de Mora', 'Gelatina', 'Flan', 'Mousse', 'Pie de Limón',
+                'Cheesecake', 'Tiramisu', 'Brownie', 'Cupcakes', 'Donas',
+                'Torta de Chocolate', 'Torta de Vainilla', 'Torta de Zanahoria', 'Torta Selva Negra', 'Milhojas',
+                'Helado de Coco', 'Helado de Taxo', 'Helado de Mora', 'Helado de Guanábana', 'Raspados',
+                'Canguil Acaramelado', 'Algodón de Azúcar', 'Manzanas Acarameladas', 'Chocotejas', 'Turrones',
+                'Macarons', 'Croissant', 'Pan de Dulce', 'Galletas', 'Panelitas de Leche'
+            ],
+            '⚽ Fútbol': [
+                'Barcelona SC', 'Emelec', 'Liga de Quito', 'Independiente del Valle', 'Aucas', 
+                'El Nacional', 'Deportivo Quito', 'Olmedo', 'Delfín', 'Macará',
+                'Universidad Católica', 'Técnico Universitario', 'Mushuc Runa', 'Orense', 'Guayaquil City',
+                'Messi', 'Cristiano Ronaldo', 'Neymar', 'Mbappé', 'Haaland',
+                'Mundial', 'Copa América', 'Eliminatorias', 'Champions League', 'Libertadores',
+                'Barcelona', 'Real Madrid', 'Manchester United', 'Liverpool', 'Bayern Munich',
+                'Enner Valencia', 'Antonio Valencia', 'Jefferson Montero', 'Agustín Delgado', 'Iván Kaviedes',
+                'Álex Aguinaga', 'Ulises de la Cruz', 'Christian Benítez', 'Felipe Caicedo', 'Michael Estrada',
+                'Penalty', 'Gol', 'Tiro Libre', 'Corner', 'Offside',
+                'VAR', 'Árbitro', 'Tarjeta Amarilla', 'Tarjeta Roja', 'Hat-trick'
+            ],
+            '👻 Terror': [
+                'El Exorcista', 'It', 'The Ring', 'Scream', 'El Conjuro', 
+                'Insidious', 'Saw', 'Halloween', 'La Monja', 'La Llorona',
+                'Viernes 13', 'Chucky', 'The Grudge', 'Sinister', 'Annabelle',
+                'Paranormal Activity', 'Hereditary', 'The Witch', 'Get Out', 'A Quiet Place',
+                'El Aro', 'Pesadilla en Elm Street', 'Alien', 'The Shining', 'Carrie',
+                'Misery', 'Poltergeist', 'The Babadook', 'Midsommar', 'Us',
+                'Don\'t Breathe', 'The Descent', 'REC', 'Orphan', 'The Orphanage',
+                'Devil', 'Lights Out', 'Ouija', 'The Purge', 'Split',
+                'The Visit', 'Truth or Dare', 'Escape Room', 'Terrifier', 'Smile',
+                'M3GAN', 'Malignant', 'La Dama de Blanco', 'El Jinete Sin Cabeza', 'Zombies'
+            ],
+            '🎬 Películas': [
+                'Titanic', 'Avatar', 'Avengers', 'Star Wars', 'Harry Potter',
+                'El Señor de los Anillos', 'Jurassic Park', 'Matrix', 'Inception', 'Interestelar',
+                'El Padrino', 'Forrest Gump', 'Pulp Fiction', 'Gladiador', 'Rocky',
+                'Rápidos y Furiosos', 'Volver al Futuro', 'Terminator', 'Spider-Man', 'Batman',
+                'Iron Man', 'Thor', 'Capitán América', 'Black Panther', 'Deadpool',
+                'Joker', 'Coco', 'Toy Story', 'Frozen', 'El Rey León',
+                'Shrek', 'Buscando a Nemo', 'Intensamente', 'Up', 'Moana',
+                'Encanto', 'Mi Villano Favorito', 'Madagascar', 'Kung Fu Panda', 'Los Increíbles',
+                'Top Gun', 'Mission Impossible', 'James Bond', 'Indiana Jones', 'Piratas del Caribe',
+                'Transformers', 'Godzilla', 'King Kong', 'Barbie', 'Oppenheimer'
+            ],
+            '🎵 Música': [
+                // Artistas Latinos y Ecuatorianos
+                'Juan Fernando Velasco', 'Mirella Cesa', 'Verde 70', 'Rocola Bacalao', 'Sal y Mileto',
+                'Au D', 'Tanque Lleno', 'Policía', 'Cruks en Karnak', 'Danilo Parra',
+                'Shakira', 'Bad Bunny', 'Karol G', 'J Balvin', 'Maluma',
+                'Daddy Yankee', 'Don Omar', 'Nicky Jam', 'Ozuna', 'Becky G',
+                // Artistas Internacionales
+                'Taylor Swift', 'Ed Sheeran', 'Ariana Grande', 'Bruno Mars', 'The Weeknd',
+                'Drake', 'Rihanna', 'Beyoncé', 'Justin Bieber', 'Lady Gaga',
+                // Géneros
+                'Salsa', 'Merengue', 'Bachata', 'Reggaeton', 'Cumbia',
+                'Rock', 'Pop', 'Hip Hop', 'Trap', 'Electrónica',
+                // Instrumentos
+                'Guitarra', 'Piano', 'Batería', 'Bajo', 'Saxofón',
+                'Trompeta', 'Violín', 'Flauta', 'Tambor', 'Maracas'
+            ]
+        };
+
+        function ImpostorGame() {
+            // Estados principales
+            const [screen, setScreen] = useState('participants'); // participants, theme, impostors, revealing, playing, voting, ended
+            const [participants, setParticipants] = useState([]);
+            const [participantName, setParticipantName] = useState('');
+            const [selectedTheme, setSelectedTheme] = useState('');
+            const [numImpostors, setNumImpostors] = useState(1);
+            const [numEliminationsPerRound, setNumEliminationsPerRound] = useState(1);
+            const [secretWord, setSecretWord] = useState('');
+            const [currentRevealIndex, setCurrentRevealIndex] = useState(0);
+            const [curtainPosition, setCurtainPosition] = useState(0);
+            const [isDragging, setIsDragging] = useState(false);
+            const [isRevealed, setIsRevealed] = useState(false);
+            const [turnOrder, setTurnOrder] = useState([]);
+            const [currentRound, setCurrentRound] = useState(1);
+            const [votes, setVotes] = useState({});
+            const [showConfirmation, setShowConfirmation] = useState(false);
+            const [selectedToEliminate, setSelectedToEliminate] = useState([]);
+            const [winner, setWinner] = useState(null);
+            const [showInnocentModal, setShowInnocentModal] = useState(false);
+            const [customCategories, setCustomCategories] = useState({});
+            const [showCustomCategoryModal, setShowCustomCategoryModal] = useState(false);
+            const [newCategoryName, setNewCategoryName] = useState('');
+            const [newCategoryWords, setNewCategoryWords] = useState('');
+            const [newCategoryEmoji, setNewCategoryEmoji] = useState('🎯');
+            const [currentWord, setCurrentWord] = useState('');
+            const [wordsList, setWordsList] = useState([]);
+            const [lastUsedWords, setLastUsedWords] = useState({});
+            const [showMenu, setShowMenu] = useState(false);
+
+            // Funciones de participantes
+            const handleResetGame = () => {
+                if (confirm('¿Estás seguro que quieres reiniciar el juego? Se perderá todo el progreso.')) {
+                    setScreen('participants');
+                    setParticipants([]);
+                    setParticipantName('');
+                    setSelectedTheme('');
+                    setNumImpostors(1);
+                    setNumEliminationsPerRound(1);
+                    setSecretWord('');
+                    setCurrentRevealIndex(0);
+                    setCurtainPosition(0);
+                    setIsDragging(false);
+                    setIsRevealed(false);
+                    setTurnOrder([]);
+                    setCurrentRound(1);
+                    setVotes({});
+                    setShowConfirmation(false);
+                    setSelectedToEliminate([]);
+                    setWinner(null);
+                    setShowInnocentModal(false);
+                }
+            };
+
+            const addParticipant = () => {
+                if (participantName.trim() && !participants.find(p => p.name === participantName.trim())) {
+                    setParticipants([...participants, { 
+                        name: participantName.trim(), 
+                        isImpostor: false, 
+                        eliminated: false
+                    }]);
+                    setParticipantName('');
+                }
+            };
+
+            const removeParticipant = (name) => {
+                setParticipants(participants.filter(p => p.name !== name));
+            };
+
+            const goToThemeSelection = () => {
+                if (participants.length < 3) {
+                    alert('Se necesitan al menos 3 participantes');
+                    return;
+                }
+                setScreen('theme');
+            };
+
+            const handleAddWord = () => {
+                const trimmedWord = currentWord.trim();
+                
+                if (!trimmedWord) {
+                    alert('Escribe una palabra antes de agregar');
+                    return;
+                }
+                
+                if (wordsList.includes(trimmedWord)) {
+                    alert('Esta palabra ya fue agregada');
+                    return;
+                }
+                
+                setWordsList([...wordsList, trimmedWord]);
+                setCurrentWord('');
+            };
+
+            const handleRemoveLastWord = () => {
+                if (wordsList.length > 0) {
+                    setWordsList(wordsList.slice(0, -1));
+                }
+            };
+
+            const handleAddCustomCategory = () => {
+                if (!newCategoryName.trim()) {
+                    alert('Ingresa un nombre para la categoría');
+                    return;
+                }
+                
+                if (wordsList.length < 5) {
+                    alert('Agrega al menos 5 palabras');
+                    return;
+                }
+
+                const categoryKey = `${newCategoryEmoji} ${newCategoryName}`;
+                
+                setCustomCategories({
+                    ...customCategories,
+                    [categoryKey]: wordsList
+                });
+
+                // Limpiar formulario
+                setNewCategoryName('');
+                setNewCategoryWords('');
+                setNewCategoryEmoji('🎯');
+                setCurrentWord('');
+                setWordsList([]);
+                setShowCustomCategoryModal(false);
+                
+                alert(`✅ Categoría "${categoryKey}" agregada con ${wordsList.length} palabras`);
+            };
+
+            const handleDeleteCustomCategory = (categoryKey) => {
+                if (confirm(`¿Eliminar la categoría "${categoryKey}"?`)) {
+                    const newCategories = { ...customCategories };
+                    delete newCategories[categoryKey];
+                    setCustomCategories(newCategories);
+                    
+                    // Si era la categoría seleccionada, deseleccionar
+                    if (selectedTheme === categoryKey) {
+                        setSelectedTheme('');
+                    }
+                }
+            };
+
+            const getAllThemes = () => {
+                return { ...THEMES, ...customCategories };
+            };
+
+            const handleMenuNavigation = (targetScreen) => {
+                // Si está en medio del juego, pedir confirmación
+                if (screen === 'revealing' || screen === 'playing' || screen === 'voting') {
+                    if (!confirm('¿Estás seguro? Se perderá el progreso actual del juego.')) {
+                        setShowMenu(false);
+                        return;
+                    }
+                }
+
+                // Navegar a la pantalla deseada
+                switch(targetScreen) {
+                    case 'participants':
+                        setScreen('participants');
+                        // Mantener participantes pero limpiar el resto
+                        setSelectedTheme('');
+                        setNumImpostors(1);
+                        setNumEliminationsPerRound(1);
+                        break;
+                    case 'theme':
+                        if (participants.length < 3) {
+                            alert('Primero agrega al menos 3 participantes');
+                            setScreen('participants');
+                        } else {
+                            setScreen('theme');
+                        }
+                        break;
+                    case 'impostors':
+                        if (participants.length < 3) {
+                            alert('Primero agrega al menos 3 participantes');
+                            setScreen('participants');
+                        } else if (!selectedTheme) {
+                            alert('Primero selecciona una categoría');
+                            setScreen('theme');
+                        } else {
+                            setScreen('impostors');
+                        }
+                        break;
+                    default:
+                        setScreen(targetScreen);
+                }
+
+                setShowMenu(false);
+            };
+
+            const goToImpostorSelection = () => {
+                if (!selectedTheme) {
+                    alert('Selecciona una temática');
+                    return;
+                }
+                setScreen('impostors');
+            };
+
+            const startGame = () => {
+                if (numImpostors >= participants.length) {
+                    alert('El número de impostores debe ser menor al número de participantes');
+                    return;
+                }
+
+                const allThemes = getAllThemes();
+
+                // Determinar la temática final
+                let finalTheme = selectedTheme;
+                
+                // Si es "Al Azar", seleccionar una categoría aleatoria
+                if (selectedTheme === '🎲 Al Azar') {
+                    const availableThemes = Object.keys(allThemes).filter(t => t !== '🎲 Al Azar');
+                    finalTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+                }
+
+                const allWords = allThemes[finalTheme];
+                
+                // Obtener las últimas palabras usadas de esta categoría
+                const recentWords = lastUsedWords[finalTheme] || [];
+                
+                // Filtrar palabras que no estén en las últimas 3 usadas
+                let availableWords = allWords.filter(word => !recentWords.includes(word));
+                
+                // Si no hay palabras disponibles (muy raro), usar todas
+                if (availableWords.length === 0) {
+                    availableWords = allWords;
+                }
+                
+                // Seleccionar palabra aleatoria
+                const word = availableWords[Math.floor(Math.random() * availableWords.length)];
+                setSecretWord(word);
+                
+                // Actualizar historial de palabras usadas (mantener últimas 3)
+                const updatedHistory = [word, ...recentWords].slice(0, 3);
+                setLastUsedWords({
+                    ...lastUsedWords,
+                    [finalTheme]: updatedHistory
+                });
+
+                // Crear una copia de los participantes
+                const participantsCopy = [...participants];
+                
+                // Mezclar completamente el array para asignación aleatoria
+                const shuffled = participantsCopy.sort(() => Math.random() - 0.5);
+                
+                // Asignar roles aleatoriamente
+                const withRoles = shuffled.map((p, i) => ({
+                    ...p,
+                    isImpostor: i < numImpostors
+                }));
+                
+                // IMPORTANTE: Volver a mezclar para que el orden de revelación sea diferente
+                // al orden de asignación de roles
+                const finalOrder = [...withRoles].sort(() => Math.random() - 0.5);
+                
+                // Actualizar la temática seleccionada para mostrar la real si era al azar
+                setSelectedTheme(finalTheme);
+                
+                setParticipants(finalOrder);
+                setScreen('revealing');
+                setCurrentRevealIndex(0);
+                setCurtainPosition(0);
+                setIsRevealed(false);
+            };
+
+            // Manejo de la cortina interna - Siempre vuelve a bajar
+            const handleCoverStart = (clientY) => {
+                if (isRevealed) return; // No permitir arrastrar si está en modo botón
+                setIsDragging(true);
+            };
+
+            const handleCoverMove = (clientY) => {
+                if (!isDragging || isRevealed) return;
+                
+                // Obtener la posición de la tarjeta en la pantalla
+                const card = document.querySelector('.reveal-card');
+                if (!card) return;
+                
+                const cardRect = card.getBoundingClientRect();
+                const relativeY = clientY - cardRect.top;
+                
+                // Calcular posición con resistencia (más lento)
+                let newPosition = (relativeY / cardRect.height) * 100;
+                
+                // Aplicar resistencia: mientras más arriba, más difícil de mover
+                if (newPosition > 50) {
+                    newPosition = 50 + (newPosition - 50) * 0.5; // 50% más lento después del 50%
+                }
+                
+                newPosition = Math.max(0, Math.min(100, newPosition));
+                setCurtainPosition(newPosition);
+            };
+
+            const handleCoverEnd = () => {
+                if (isRevealed) return; // No hacer nada si está en modo botón
+                setIsDragging(false);
+                // SIEMPRE vuelve a bajar cuando sueltas
+                setCurtainPosition(0);
+            };
+
+            const handleToggleReveal = () => {
+                if (!isRevealed) {
+                    // Mostrar: animar hacia arriba
+                    setIsRevealed(true);
+                    setCurtainPosition(100);
+                } else {
+                    // Ocultar: animar hacia abajo
+                    setIsRevealed(false);
+                    setCurtainPosition(0);
+                }
+            };
+
+            const nextParticipant = () => {
+                // Validar que la palabra esté oculta antes de continuar
+                if (isRevealed) {
+                    alert('⚠️ Debes ocultar la palabra antes de continuar');
+                    return;
+                }
+
+                if (currentRevealIndex < participants.length - 1) {
+                    setCurrentRevealIndex(currentRevealIndex + 1);
+                    setCurtainPosition(0);
+                    setIsRevealed(false);
+                } else {
+                    startPlayingPhase();
+                }
+            };
+
+            const startPlayingPhase = () => {
+                const activePlayers = participants.filter(p => !p.eliminated);
+                const shuffled = [...activePlayers].sort(() => Math.random() - 0.5);
+                setTurnOrder(shuffled.map(p => p.name));
+                setScreen('playing');
+            };
+
+            const handleStartVoting = () => {
+                const initialVotes = {};
+                participants.filter(p => !p.eliminated).forEach(p => {
+                    initialVotes[p.name] = 0;
+                });
+                setVotes(initialVotes);
+                setScreen('voting');
+            };
+
+            const handleAddVote = (playerName) => {
+                const activePlayers = participants.filter(p => !p.eliminated);
+                const totalVotes = Object.values(votes).reduce((sum, count) => sum + count, 0);
+                
+                if (totalVotes < activePlayers.length) {
+                    setVotes({
+                        ...votes,
+                        [playerName]: (votes[playerName] || 0) + 1
+                    });
+                }
+            };
+
+            const handleRemoveVote = (playerName) => {
+                if (votes[playerName] > 0) {
+                    setVotes({
+                        ...votes,
+                        [playerName]: votes[playerName] - 1
+                    });
+                }
+            };
+
+            const handleConfirmElimination = () => {
+                const activePlayers = participants.filter(p => !p.eliminated);
+                const totalVotes = Object.values(votes).reduce((sum, count) => sum + count, 0);
+                
+                if (totalVotes < activePlayers.length) {
+                    alert(`Faltan ${activePlayers.length - totalVotes} voto(s)`);
+                    return;
+                }
+                
+                // Obtener jugadores ordenados por votos (de mayor a menor)
+                const sortedPlayers = Object.keys(votes)
+                    .map(name => ({ name, votes: votes[name] }))
+                    .sort((a, b) => b.votes - a.votes);
+
+                // Obtener los N jugadores con más votos según numEliminationsPerRound
+                const playersToEliminate = [];
+                
+                for (let i = 0; i < numEliminationsPerRound && i < sortedPlayers.length; i++) {
+                    if (sortedPlayers[i].votes > 0) {
+                        playersToEliminate.push(sortedPlayers[i].name);
+                    }
+                }
+
+                // Verificar si hay empate en la última posición de eliminación
+                if (playersToEliminate.length === numEliminationsPerRound) {
+                    const lastVoteCount = sortedPlayers[numEliminationsPerRound - 1].votes;
+                    
+                    // Contar cuántos jugadores tienen la misma cantidad de votos que el último
+                    const playersWithSameVotes = sortedPlayers.filter(p => p.votes === lastVoteCount);
+                    
+                    if (playersWithSameVotes.length > 1) {
+                        // Verificar si hay más jugadores empatados de los que se pueden eliminar
+                        const tiedPlayers = playersWithSameVotes.map(p => p.name);
+                        const tiedInSelection = playersToEliminate.filter(p => tiedPlayers.includes(p));
+                        
+                        if (tiedPlayers.length > tiedInSelection.length) {
+                            alert(`⚠️ Hay un empate entre ${playersWithSameVotes.length} jugadores con ${lastVoteCount} voto(s) cada uno: ${tiedPlayers.join(', ')}. No se puede determinar a quién eliminar. Vuelvan a votar.`);
+                            return;
+                        }
+                    }
+                }
+
+                if (playersToEliminate.length > 0) {
+                    setSelectedToEliminate(playersToEliminate);
+                    setShowConfirmation(true);
+                } else {
+                    alert('Debe haber al menos un voto para continuar');
+                }
+            };
+
+            const handleFinalConfirmation = () => {
+                const updatedParticipants = participants.map(p => {
+                    if (selectedToEliminate.includes(p.name)) {
+                        return { ...p, eliminated: true };
+                    }
+                    return p;
+                });
+                setParticipants(updatedParticipants);
+
+                setShowConfirmation(false);
+
+                // Verificar si algún eliminado es inocente
+                const eliminatedPlayers = participants.filter(p => selectedToEliminate.includes(p.name));
+                const hasInnocent = eliminatedPlayers.some(p => !p.isImpostor);
+
+                if (hasInnocent) {
+                    setShowInnocentModal(true);
+                    setTimeout(() => {
+                        setShowInnocentModal(false);
+                        checkWinConditions(updatedParticipants);
+                    }, 3000);
+                } else {
+                    checkWinConditions(updatedParticipants);
+                }
+            };
+
+            const checkWinConditions = (currentParticipants) => {
+                const activePlayers = currentParticipants.filter(p => !p.eliminated);
+                const activeImpostors = activePlayers.filter(p => p.isImpostor).length;
+                const activeInnocents = activePlayers.filter(p => !p.isImpostor).length;
+
+                setSelectedToEliminate([]);
+                setVotes({});
+
+                if (activeImpostors === 0) {
+                    setWinner('innocents');
+                    setScreen('ended');
+                } else if (activeImpostors >= activeInnocents) {
+                    setWinner('impostors');
+                    setScreen('ended');
+                } else {
+                    setCurrentRound(currentRound + 1);
+                    startPlayingPhase();
+                }
+            };
+
+            const handleNewRound = () => {
+                const resetParticipants = participants.map(p => ({
+                    ...p,
+                    isImpostor: false,
+                    eliminated: false
+                }));
+                setParticipants(resetParticipants);
+                setCurrentRound(1);
+                setWinner(null);
+                setScreen('impostors');
+            };
+
+            const handleAddMoreParticipants = () => {
+                const resetParticipants = participants.map(p => ({
+                    ...p,
+                    isImpostor: false,
+                    eliminated: false
+                }));
+                setParticipants(resetParticipants);
+                setCurrentRound(1);
+                setWinner(null);
+                setScreen('participants');
+            };
+
+            const handleChangeTheme = () => {
+                const resetParticipants = participants.map(p => ({
+                    ...p,
+                    isImpostor: false,
+                    eliminated: false
+                }));
+                setParticipants(resetParticipants);
+                setCurrentRound(1);
+                setWinner(null);
+                setSelectedTheme('');
+                setScreen('theme');
+            };
+
+            // Pantalla de revelación con tarjeta interna
+            if (screen === 'revealing') {
+                const currentParticipant = participants[currentRevealIndex];
+
+                return (
+                    <div className="app-container">
+                        <div className="reveal-screen">
+                            <div className="reveal-header">
+                                <h2>{currentParticipant.name}</h2>
+                                <p>Jugador {currentRevealIndex + 1} de {participants.length}</p>
+                            </div>
+
+                            <div className="reveal-card-container">
+                                <div className="reveal-card">
+                                    {/* Contenido secreto debajo */}
+                                    <div className="secret-content-card">
+                                        {currentParticipant.isImpostor ? (
+                                            <>
+                                                <div className="secret-label">Tu rol es</div>
+                                                <div className="word-display impostor">
+                                                    😈 IMPOSTOR
+                                                </div>
+                                                <p style={{fontSize: '0.95em', textAlign: 'center', color: '#666', padding: '0 20px'}}>
+                                                    Descubre la palabra secreta sin ser descubierto
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="secret-label">Tu palabra es</div>
+                                                <div className="word-display">
+                                                    {secretWord}
+                                                </div>
+                                                <div className="theme-tag">
+                                                    {selectedTheme}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Capa de cobertura que se desliza */}
+                                    <div 
+                                        className={`cover-overlay ${!isDragging && !isRevealed ? 'released' : ''}`}
+                                        style={{
+                                            transform: `translateY(-${isRevealed ? 100 : curtainPosition}%)`,
+                                            transition: isRevealed ? 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' : (!isDragging ? 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)' : 'none')
+                                        }}
+                                        onMouseDown={(e) => handleCoverStart(e.clientY)}
+                                        onMouseMove={(e) => isDragging && handleCoverMove(e.clientY)}
+                                        onMouseUp={handleCoverEnd}
+                                        onMouseLeave={handleCoverEnd}
+                                        onTouchStart={(e) => {
+                                            handleCoverStart(e.touches[0].clientY);
+                                        }}
+                                        onTouchMove={(e) => {
+                                            handleCoverMove(e.touches[0].clientY);
+                                        }}
+                                        onTouchEnd={handleCoverEnd}
+                                    >
+                                        <div className="cover-content">
+                                            <div className="swipe-icon">☝️</div>
+                                            <div className="swipe-text">Mantén presionado</div>
+                                            <div className="swipe-instruction">y desliza hacia arriba</div>
+                                            <div className="reveal-progress">
+                                                <div 
+                                                    className="reveal-progress-fill"
+                                                    style={{width: `${isRevealed ? 100 : curtainPosition}%`}}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="next-button-container">
+                                <button 
+                                    className={`reveal-toggle-btn ${isRevealed ? 'showing' : ''}`}
+                                    onClick={handleToggleReveal}
+                                >
+                                    {isRevealed ? '🙈 Ocultar' : '👁️ Mostrar'}
+                                </button>
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={nextParticipant}
+                                >
+                                    {currentRevealIndex < participants.length - 1 ? 'Siguiente Jugador →' : 'Comenzar Juego 🎮'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="app-container">
+                    {/* Botón de Menú - Visible en todas las pantallas excepto en la pantalla inicial */}
+                    {screen !== 'participants' && (
+                        <button className="menu-btn" onClick={() => setShowMenu(true)}>
+                            ☰
+                        </button>
+                    )}
+
+                    {/* Panel de Menú */}
+                    {showMenu && (
+                        <div className="menu-overlay" onClick={() => setShowMenu(false)}>
+                            <div className="menu-panel" onClick={(e) => e.stopPropagation()}>
+                                <div className="menu-header">
+                                    <div className="menu-title">Menú</div>
+                                    <button className="menu-close" onClick={() => setShowMenu(false)}>
+                                        ×
+                                    </button>
+                                </div>
+
+                                <div className="menu-section-title">Navegación Rápida</div>
+                                
+                                <button 
+                                    className="menu-item"
+                                    onClick={() => handleMenuNavigation('participants')}
+                                >
+                                    <span className="menu-item-icon">👥</span>
+                                    Ir a Agregar Participantes
+                                </button>
+
+                                <button 
+                                    className="menu-item"
+                                    onClick={() => handleMenuNavigation('theme')}
+                                >
+                                    <span className="menu-item-icon">🎯</span>
+                                    Ir a Seleccionar Categoría
+                                </button>
+
+                                <button 
+                                    className="menu-item"
+                                    onClick={() => handleMenuNavigation('impostors')}
+                                >
+                                    <span className="menu-item-icon">😈</span>
+                                    Ir a Configurar Impostores
+                                </button>
+
+                                <div className="menu-divider"></div>
+
+                                <div className="menu-section-title">Acciones</div>
+
+                                <button 
+                                    className="menu-item"
+                                    onClick={() => {
+                                        setShowMenu(false);
+                                        handleResetGame();
+                                    }}
+                                    style={{background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)', color: 'white'}}
+                                >
+                                    <span className="menu-item-icon">🔄</span>
+                                    Reiniciar Juego
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Botón de Reinicio - Solo visible en algunas pantallas */}
+                    {/* Pantalla 1: Agregar Participantes */}
+                    {screen === 'participants' && (
+                        <div className="screen">
+                            <div className="header">
+                                <h1>🎭 El Impostor</h1>
+                                <p>Agrega los participantes</p>
+                            </div>
+
+                            <div className="card">
+                                <h2>Nuevo Participante</h2>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        value={participantName}
+                                        onChange={(e) => setParticipantName(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && addParticipant()}
+                                        placeholder="Nombre del jugador"
+                                    />
+                                </div>
+                                <button className="btn btn-primary" onClick={addParticipant}>
+                                    ➕ Agregar
+                                </button>
+                            </div>
+
+                            {participants.length > 0 && (
+                                <div className="card">
+                                    <h2>Jugadores ({participants.length})</h2>
+                                    {participants.map(p => (
+                                        <div key={p.name} className="participant-item">
+                                            <span style={{fontWeight: '600'}}>{p.name}</span>
+                                            <button 
+                                                className="btn btn-danger btn-small"
+                                                onClick={() => removeParticipant(p.name)}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={goToThemeSelection}
+                                disabled={participants.length < 3}
+                            >
+                                Continuar →
+                            </button>
+
+                            <div className="footer">
+                                <div className="footer-content">
+                                    <div className="footer-title">App desarrollada por Ing. José Armando Navarrete</div>
+                                    <div className="footer-email">
+                                        <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
+                                    </div>
+                                    <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pantalla 2: Seleccionar Temática */}
+                    {screen === 'theme' && (
+                        <div className="screen">
+                            <button className="back-btn" onClick={() => setScreen('participants')}>
+                                ←
+                            </button>
+                            <div className="header">
+                                <h1>🎯 Temática</h1>
+                                <p>Selecciona el tema del juego</p>
+                            </div>
+
+                            <div className="card">
+                                <h2>Categorías Predefinidas</h2>
+                                <div className="theme-grid">
+                                    {Object.keys(THEMES).map(theme => (
+                                        <div
+                                            key={theme}
+                                            className={`theme-card ${
+                                                selectedTheme === theme ? 'selected' : ''
+                                            } ${theme === '🎲 Al Azar' ? 'random' : ''}`}
+                                            onClick={() => setSelectedTheme(theme)}
+                                        >
+                                            {theme}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {Object.keys(customCategories).length > 0 && (
+                                <div className="card">
+                                    <h2>Mis Categorías Personalizadas</h2>
+                                    {Object.keys(customCategories).map(categoryKey => (
+                                        <div 
+                                            key={categoryKey} 
+                                            className="custom-category-item"
+                                            onClick={() => setSelectedTheme(categoryKey)}
+                                            style={{
+                                                background: selectedTheme === categoryKey 
+                                                    ? 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' 
+                                                    : 'rgba(67, 233, 123, 0.2)',
+                                                color: selectedTheme === categoryKey ? 'white' : '#333',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <div className="custom-category-info">
+                                                <div className="custom-category-name">{categoryKey}</div>
+                                                <div className="custom-category-count" style={{
+                                                    color: selectedTheme === categoryKey ? 'rgba(255,255,255,0.9)' : '#666'
+                                                }}>
+                                                    {customCategories[categoryKey].length} palabras
+                                                </div>
+                                            </div>
+                                            <button 
+                                                className="delete-category-btn"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteCustomCategory(categoryKey);
+                                                }}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button 
+                                className="custom-category-btn"
+                                onClick={() => setShowCustomCategoryModal(true)}
+                            >
+                                ➕ Crear Categoría Personalizada
+                            </button>
+
+                            {selectedTheme && (
+                                <p style={{textAlign: 'center', color: 'white', marginTop: '15px', fontSize: '0.9em', padding: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '8px'}}>
+                                    {selectedTheme === '🎲 Al Azar' 
+                                        ? 'Se elegirá una categoría aleatoria al iniciar'
+                                        : `Seleccionaste: ${selectedTheme}`
+                                    }
+                                </p>
+                            )}
+
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={goToImpostorSelection}
+                                disabled={!selectedTheme}
+                            >
+                                Continuar →
+                            </button>
+
+                            {showCustomCategoryModal && (
+                                <div className="modal-overlay">
+                                    <div className="modal-content" style={{maxWidth: '500px'}}>
+                                        <h2 style={{marginBottom: '20px'}}>Nueva Categoría</h2>
+                                        
+                                        <div className="modal-input-group">
+                                            <label>Emoji (opcional)</label>
+                                            <div className="emoji-selector">
+                                                {['🎯', '🎮', '🎪', '🎨', '🎭', '🎸', '🏀', '⚡', '🔥', '💎', '🌟', '🚀'].map(emoji => (
+                                                    <div
+                                                        key={emoji}
+                                                        className={`emoji-option ${newCategoryEmoji === emoji ? 'selected' : ''}`}
+                                                        onClick={() => setNewCategoryEmoji(emoji)}
+                                                    >
+                                                        {emoji}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="modal-input-group">
+                                            <label>Nombre de la Categoría</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Ej: Deportes, Países, Marcas..."
+                                                value={newCategoryName}
+                                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="modal-input-group">
+                                            <label>Agregar Palabra</label>
+                                            <div style={{display: 'flex', gap: '10px', alignItems: 'stretch'}}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Escribe una palabra..."
+                                                    value={currentWord}
+                                                    onChange={(e) => setCurrentWord(e.target.value)}
+                                                    onKeyPress={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleAddWord();
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        flex: 1,
+                                                        padding: '12px',
+                                                        border: '2px solid #e0e0e0',
+                                                        borderRadius: '8px',
+                                                        fontSize: '16px',
+                                                        fontFamily: 'inherit'
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddWord}
+                                                    style={{
+                                                        padding: '12px 20px',
+                                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        fontSize: '16px',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                >
+                                                    ➕ Agregar
+                                                </button>
+                                            </div>
+                                            
+                                            <div style={{
+                                                marginTop: '15px',
+                                                padding: '20px',
+                                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                                borderRadius: '12px',
+                                                textAlign: 'center',
+                                                color: 'white'
+                                            }}>
+                                                <div style={{
+                                                    fontSize: '2.5em',
+                                                    fontWeight: '700',
+                                                    marginBottom: '5px'
+                                                }}>
+                                                    {wordsList.length}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.9em',
+                                                    opacity: 0.9
+                                                }}>
+                                                    {wordsList.length === 1 ? 'palabra agregada' : 'palabras agregadas'}
+                                                </div>
+                                            </div>
+
+                                            {wordsList.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveLastWord}
+                                                    style={{
+                                                        marginTop: '10px',
+                                                        width: '100%',
+                                                        padding: '10px',
+                                                        background: '#ff6b6b',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        fontSize: '14px',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    🗑️ Eliminar última palabra
+                                                </button>
+                                            )}
+
+                                            <div className="helper-text" style={{textAlign: 'center', marginTop: '10px'}}>
+                                                Mínimo 5 palabras para crear la categoría
+                                            </div>
+                                        </div>
+
+                                        <div className="modal-buttons">
+                                            <button 
+                                                className="btn btn-outline"
+                                                onClick={() => {
+                                                    setShowCustomCategoryModal(false);
+                                                    setNewCategoryName('');
+                                                    setNewCategoryWords('');
+                                                    setNewCategoryEmoji('🎯');
+                                                    setCurrentWord('');
+                                                    setWordsList([]);
+                                                }}
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button 
+                                                className="btn btn-secondary"
+                                                onClick={handleAddCustomCategory}
+                                            >
+                                                Crear Categoría
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="footer">
+                                <div className="footer-content">
+                                    <div className="footer-title">App desarrollada por Ing. José Armando Navarrete</div>
+                                    <div className="footer-email">
+                                        <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
+                                    </div>
+                                    <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pantalla 3: Seleccionar Número de Impostores */}
+                    {screen === 'impostors' && (
+                        <div className="screen">
+                            <button className="back-btn" onClick={() => setScreen('theme')}>
+                                ←
+                            </button>
+                            <div className="header">
+                                <h1>😈 Configuración</h1>
+                                <p>Ajusta las reglas del juego</p>
+                            </div>
+
+                            <div className="card">
+                                <h2>Número de Impostores</h2>
+                                <div className="impostor-selector">
+                                    <button 
+                                        className="impostor-btn"
+                                        onClick={() => setNumImpostors(Math.max(1, numImpostors - 1))}
+                                    >
+                                        −
+                                    </button>
+                                    <div className="impostor-number">{numImpostors}</div>
+                                    <button 
+                                        className="impostor-btn"
+                                        onClick={() => setNumImpostors(Math.min(participants.length - 1, numImpostors + 1))}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <p style={{textAlign: 'center', color: '#666', marginTop: '20px'}}>
+                                    De {participants.length} jugadores totales
+                                </p>
+                            </div>
+
+                            <div className="card">
+                                <h2>Eliminaciones por Ronda</h2>
+                                <div className="impostor-selector">
+                                    <button 
+                                        className="impostor-btn"
+                                        onClick={() => setNumEliminationsPerRound(Math.max(1, numEliminationsPerRound - 1))}
+                                    >
+                                        −
+                                    </button>
+                                    <div className="impostor-number">{numEliminationsPerRound}</div>
+                                    <button 
+                                        className="impostor-btn"
+                                        onClick={() => setNumEliminationsPerRound(Math.min(Math.max(1, participants.length - 2), numEliminationsPerRound + 1))}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                                <p style={{textAlign: 'center', color: '#666', marginTop: '20px'}}>
+                                    Jugadores a eliminar cada ronda
+                                </p>
+                            </div>
+
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={startGame}
+                            >
+                                Iniciar Juego 🎮
+                            </button>
+
+                            <div className="footer">
+                                <div className="footer-content">
+                                    <div className="footer-title">App desarrollada por Ing. José Armando Navarrete</div>
+                                    <div className="footer-email">
+                                        <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
+                                    </div>
+                                    <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pantalla de Juego */}
+                    {screen === 'playing' && (
+                        <div className="screen">
+                            <div className="header">
+                                <h1>Ronda {currentRound}</h1>
+                                <p>{selectedTheme}</p>
+                            </div>
+
+                            <div className="card">
+                                <h2>Orden de Turnos</h2>
+                                <p style={{color: '#666', marginBottom: '15px', fontSize: '0.9em'}}>
+                                    Cada jugador dice una palabra relacionada
+                                </p>
+                                {turnOrder.map((name, index) => (
+                                    <div key={index} className="participant-item">
+                                        <span>
+                                            <span className="turn-badge">{index + 1}</span>
+                                            {name}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="card">
+                                <h2>Jugadores Activos</h2>
+                                {participants.map(p => (
+                                    <div 
+                                        key={p.name} 
+                                        className={`participant-item ${p.eliminated ? 'eliminated-badge' : ''}`}
+                                    >
+                                        <span style={{fontWeight: '600'}}>{p.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button className="btn btn-primary" onClick={handleStartVoting}>
+                                Ir a Votación 🗳️
+                            </button>
+
+                            <div className="footer">
+                                <div className="footer-content">
+                                    <div className="footer-title">App desarrollada por Ing. José Armando Navarrete</div>
+                                    <div className="footer-email">
+                                        <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
+                                    </div>
+                                    <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pantalla de Votación */}
+                    {screen === 'voting' && (
+                        <div className="screen">
+                            <div className="header">
+                                <h1>🗳️ Votación</h1>
+                                <p>Ronda {currentRound}</p>
+                            </div>
+
+                            {(() => {
+                                const activePlayers = participants.filter(p => !p.eliminated);
+                                const totalVotes = Object.values(votes).reduce((sum, count) => sum + count, 0);
+                                const progress = (totalVotes / activePlayers.length) * 100;
+                                
+                                return (
+                                    <div className="card">
+                                        <h2>Progreso: {totalVotes}/{activePlayers.length}</h2>
+                                        <div className="progress-bar">
+                                            <div 
+                                                className="progress-fill"
+                                                style={{width: `${progress}%`}}
+                                            >
+                                                {progress > 20 && `${Math.round(progress)}%`}
+                                            </div>
+                                        </div>
+                                        {totalVotes < activePlayers.length ? (
+                                            <p style={{color: '#666', textAlign: 'center'}}>
+                                                Faltan {activePlayers.length - totalVotes} voto(s)
+                                            </p>
+                                        ) : (
+                                            <p style={{color: '#4caf50', textAlign: 'center', fontWeight: 'bold'}}>
+                                                ✓ Todos votaron
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            <div className="card">
+                                <h2>Vota al Impostor</h2>
+                                {participants.filter(p => !p.eliminated).map(p => (
+                                    <div key={p.name} className="vote-card">
+                                        <span style={{fontWeight: '600'}}>{p.name}</span>
+                                        <div className="vote-actions">
+                                            {votes[p.name] > 0 && (
+                                                <>
+                                                    <div className="vote-count-badge">{votes[p.name]}</div>
+                                                    <button 
+                                                        className="btn btn-danger btn-small"
+                                                        onClick={() => handleRemoveVote(p.name)}
+                                                    >
+                                                        −
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button 
+                                                className="btn btn-primary btn-small"
+                                                onClick={() => handleAddVote(p.name)}
+                                                disabled={(() => {
+                                                    const activePlayers = participants.filter(p => !p.eliminated);
+                                                    const totalVotes = Object.values(votes).reduce((sum, count) => sum + count, 0);
+                                                    return totalVotes >= activePlayers.length;
+                                                })()}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={handleConfirmElimination}
+                            >
+                                Confirmar Eliminación
+                            </button>
+
+                            {showConfirmation && (
+                                <div className="modal-overlay">
+                                    <div className="modal-content">
+                                        <div className="modal-emoji">⚠️</div>
+                                        <h2>¿Estás seguro?</h2>
+                                        <p>
+                                            Vas a eliminar a:<br/>
+                                            {selectedToEliminate.map((name, index) => (
+                                                <span key={name}>
+                                                    <strong style={{fontSize: '1.2em', color: '#667eea'}}>{name}</strong>
+                                                    {index < selectedToEliminate.length - 1 && <br/>}
+                                                </span>
+                                            ))}
+                                        </p>
+                                        <p style={{fontSize: '0.95em', marginTop: '10px'}}>
+                                            {selectedToEliminate.map(name => `${name}: ${votes[name]} voto(s)`).join(', ')}
+                                        </p>
+                                        <div className="modal-buttons">
+                                            <button 
+                                                className="btn btn-outline"
+                                                onClick={() => setShowConfirmation(false)}
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button 
+                                                className="btn btn-secondary"
+                                                onClick={handleFinalConfirmation}
+                                            >
+                                                Confirmar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {showInnocentModal && (
+                                <div className="modal-overlay">
+                                    <div className="modal-content">
+                                        <div className="modal-emoji">😢</div>
+                                        <h2>¡Eliminaron a un Inocente!</h2>
+                                        <p style={{fontSize: '1.2em', color: '#666'}}>
+                                            {selectedToEliminate} no era el impostor
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Pantalla Final */}
+                    {screen === 'ended' && (
+                        <div className="screen">
+                            <div className="winner-screen">
+                                <div className="winner-emoji">
+                                    {winner === 'innocents' ? '🎉' : '😈'}
+                                </div>
+                                <div className="winner-title">
+                                    {winner === 'innocents' 
+                                        ? '¡Ganan los Inocentes!' 
+                                        : '¡Ganan los Impostores!'}
+                                </div>
+                                <div className="final-word">
+                                    La palabra era: <strong>{secretWord}</strong>
+                                </div>
+
+                                <div className="card">
+                                    <h2>Revelación Final</h2>
+                                    {participants.map(p => (
+                                        <div 
+                                            key={p.name}
+                                            className={`player-role-item ${p.isImpostor ? 'impostor' : 'innocent'}`}
+                                        >
+                                            <span>{p.name}</span>
+                                            <span>{p.isImpostor ? '😈 IMPOSTOR' : '😇 INOCENTE'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <button className="btn btn-primary" onClick={handleNewRound}>
+                                    🔄 Nueva Ronda
+                                </button>
+                                <button className="btn btn-secondary" onClick={handleChangeTheme}>
+                                    🎯 Cambiar Temática
+                                </button>
+                                <button className="btn btn-outline" onClick={handleAddMoreParticipants}>
+                                    ➕ Agregar Participantes
+                                </button>
+
+                                <div className="footer">
+                                    <div className="footer-content">
+                                        <div className="footer-title">App desarrollada por Ing. José Armando Navarrete</div>
+                                        <div className="footer-email">
+                                            <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
+                                        </div>
+                                        <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<ImpostorGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
