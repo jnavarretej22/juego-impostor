@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>El Impostor - Mobile</title>
+
+    <!-- Google Analytics 4 (gtag.js) - Reemplaza G-FYNQEZBEZY con tu Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FYNQEZBEZY"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-FYNQEZBEZY', {
+            anonymize_ip: true
+        });
+
+        // Helper opcional para registrar eventos personalizados desde la app
+        window.trackEvent = function(name, params) {
+            if (typeof gtag === 'function') gtag('event', name, params || {});
+        };
+    </script>
+
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1320,13 +1337,14 @@
             return id;
         }
 
-        async function fbCreateRoom(adminId, adminName) {
-            let code, attempts = 0;
-            do {
-                code = generateRoomCode();
+        async function fbCreateRoom(adminId, adminName, suggestedCode) {
+            let code = suggestedCode || generateRoomCode(), attempts = 0;
+            while (true) {
                 const snap = await db.ref('rooms/' + code).once('value');
                 if (!snap.exists()) break;
-            } while (++attempts < 10);
+                if (++attempts >= 10) throw new Error('No se pudo generar código único');
+                code = generateRoomCode();
+            }
             await db.ref('rooms/' + code).set({
                 code, adminId, status: 'lobby', createdAt: TS,
                 config: { numImpostors: 1, numEliminationsPerRound: 1, theme: '' },
@@ -1336,6 +1354,7 @@
                     [adminId]: { name: adminName, isAdmin: true, isImpostor: false, eliminated: false, hasRevealed: false }
                 }
             });
+            if (window.trackEvent) window.trackEvent('sala_online_creada', { codigo: code });
             return code;
         }
 
@@ -1348,6 +1367,7 @@
             await db.ref(`rooms/${code}/players/${playerId}`).set({
                 name: playerName, isAdmin: false, isImpostor: false, eliminated: false, hasRevealed: false
             });
+            if (window.trackEvent) window.trackEvent('sala_online_unida', { codigo: code });
         }
 
         async function fbStartGame(code, room, customCats) {
@@ -1379,6 +1399,12 @@
                 [`rooms/${code}/turnOrder`]: shuffle([...playerIds])
             });
             await db.ref().update(updates);
+            if (window.trackEvent) window.trackEvent('partida_iniciada', {
+                modo: 'online',
+                jugadores: playerIds.length,
+                impostores: numImpostors,
+                categoria: theme
+            });
         }
 
         async function fbCastVote(code, voterId, targetId) {
@@ -1398,9 +1424,15 @@
             if (activeImpostors === 0) {
                 updates[`rooms/${code}/winner`] = 'innocents';
                 updates[`rooms/${code}/status`] = 'ended';
+                if (window.trackEvent) window.trackEvent('partida_finalizada', {
+                    modo: 'online', ganador: 'inocentes', ronda: room.currentRound || 1
+                });
             } else if (activeImpostors >= activeInnocents) {
                 updates[`rooms/${code}/winner`] = 'impostors';
                 updates[`rooms/${code}/status`] = 'ended';
+                if (window.trackEvent) window.trackEvent('partida_finalizada', {
+                    modo: 'online', ganador: 'impostores', ronda: room.currentRound || 1
+                });
             } else {
                 updates[`rooms/${code}/status`] = 'playing';
                 updates[`rooms/${code}/currentRound`] = (room.currentRound || 1) + 1;
@@ -1413,94 +1445,137 @@
         const THEMES = {
             '🎲 Al Azar': [], // Esta se llenará dinámicamente
             '🎉 Fiesta': [
-                'Cumpleaños', 'Boda', 'Graduación', 'Año Nuevo', 'Halloween', 
-                'Quinceañera', 'Baby Shower', 'Navidad', 'Carnaval', 'Despedida de Soltero',
-                'Aniversario', 'Fiesta de Disfraces', 'Pool Party', 'Nochevieja',
-                'Bautizo', 'Comunión', 'Primera Comunión', 'Fiesta Sorpresa', 'Despedida de Soltera',
-                'San Valentín', 'Día de la Madre', 'Día del Padre', 'Pascua', 'Día de los Difuntos',
-                'Fiesta de Pijamas', 'Fiesta en la Playa', 'Fiesta Temática', 'Rodeo Montubio',
-                'Cena de Gala', 'Brunch', 'Parrillada', 'Picnic', 'Karaoke',
-                'Cocktail Party', 'Fiesta de Jardín', 'Fiestas de Quito', 'Fiestas de Guayaquil',
-                'Independencia', 'Día del Trabajo', 'Carnaval de Guaranda', 'Inti Raymi',
-                'Yamor', 'Mama Negra', 'Fin de Año', 'Noche Buena', 'Velorio del Año Viejo',
-                'Matrimonio', 'Pedida de Mano', 'Luna de Miel', 'Jubilación', 'Inauguración'
+                'Quema del Año Viejo', 'Pase del Niño', 'Quinceañera con Vals', 'Boda Bien Loca', 'Bautizo del Sobrino',
+                'Despedida de Soltero', 'Despedida de Soltera', 'Fiestas de Quito', 'Fiestas de Guayaquil', 'Carnaval de Guaranda',
+                'Mama Negra', 'Inti Raymi', 'Yamor', 'Diablada de Píllaro', 'Rodeo Montubio',
+                'Pamba Mesa', 'Minga del Barrio', 'Año Viejo', 'Noche Buena', 'Misa del Gallo',
+                'Asalto Navideño', 'Once Bailable', 'Bingo Familiar', 'Parrillada del Domingo', 'Farra de Promoción',
+                'Reventón Universitario', 'Pool Party', 'Karaoke con los Tíos', 'Fiesta de Disfraces', 'Halloween',
+                'Cumpleaños Asaltado', 'Aniversario de Matri', 'Pedida de Mano', 'Matri Civil', 'Matri por la Iglesia',
+                'Baby Shower', 'Gender Reveal', 'Graduación', 'Promoción del Colegio', 'Despedida del Cole',
+                'Carnaval con Espuma', 'San Valentín', 'Día de la Madre', 'Día del Padre', 'Día de los Difuntos',
+                'Fin de Año', 'Velorio del Año Viejo', 'Fiesta de la Cosecha', 'Domingo de Hincha', 'Cena con la Suegra'
             ],
             '🍔 Comida': [
-                'Encebollado', 'Ceviche', 'Hornado', 'Fritada', 'Guatita', 
-                'Seco de Chivo', 'Arroz con Menestra', 'Bolón de Verde', 'Corviche', 'Empanadas de Verde',
-                'Tigrillo', 'Maduro con Queso', 'Chaulafán', 'Caldo de Bola', 'Caldo de Pata',
-                'Yaguarlocro', 'Locro de Papa', 'Fanesca', 'Sancocho', 'Aguado de Gallina',
-                'Arroz con Pollo', 'Seco de Pollo', 'Apanado de Pollo', 'Churrasco', 'Llapingachos',
-                'Mote Pillo', 'Mote con Chicharrón', 'Cuy Asado', 'Fritada con Mote', 'Humitas',
-                'Quimbolitos', 'Tamales', 'Hayacas', 'Muchines', 'Empanadas de Viento',
-                'Salchipapas', 'Hot Dog', 'Hamburguesa', 'Pizza', 'Sushi',
-                'Arroz Marinero', 'Encocado', 'Sudado de Pescado', 'Corvina Frita', 'Camarones al Ajillo',
-                'Caldo de Manguera', 'Tripita', 'Bollo de Pescado', 'Pan de Yuca', 'Roscas',
-                'Tostado', 'Canguil', 'Chifles', 'Patacones', 'Maduros Fritos'
+                'Encebollado del Recuperador', 'Bolón Mixto', 'Ceviche de Camarón', 'Hornado con Mote', 'Fritada con Tortillas',
+                'Guatita con Arroz', 'Seco de Chivo', 'Seco de Gallina Criolla', 'Arroz con Menestra y Carne', 'Caldo de Manguera',
+                'Caldo de Pata', 'Caldo de Salchicha', 'Caldo de 31', 'Yaguarlocro', 'Locro de Papa con Aguacate',
+                'Locro de Cuero', 'Fanesca de Semana Santa', 'Repe Lojano', 'Sancocho de Bagre', 'Aguado de Gallina',
+                'Tigrillo Lojano', 'Maduro con Queso', 'Chaulafán', 'Cangrejada con Cerveza', 'Encocado de Camarón',
+                'Cuy Asado con Papas', 'Cazuela de Camarón', 'Sudado de Pescado', 'Corvina Frita', 'Camarón Apanado',
+                'Churrasco', 'Llapingachos con Chorizo', 'Mote Pillo', 'Mote con Chicharrón', 'Humitas con Café',
+                'Quimbolitos', 'Tamales Lojanos', 'Hayacas', 'Muchines de Yuca', 'Empanadas de Verde',
+                'Empanadas de Viento', 'Salchipapa de la Esquina', 'Pincho de la Calle', 'Tripa Mishqui', 'Bollo de Pescado',
+                'Pan de Yuca con Yogur', 'Tostado con Habas', 'Chifles con Sal Prieta', 'Patacones', 'Pollo Asado de la Plaza'
             ],
             '🍰 Postres': [
-                'Tres Leches', 'Espumilla', 'Helado de Paila', 'Dulce de Higos', 'Quesadilla', 
-                'Colada Morada', 'Arroz con Leche', 'Torta Negra', 'Suspiros', 'Alfajores',
-                'Pristiños', 'Buñuelos', 'Empanadas de Morocho', 'Cocada', 'Melcocha',
-                'Nogada', 'Mazapán', 'Manjar de Leche', 'Dulce de Guayaba', 'Dulce de Babaco',
-                'Mermelada de Mora', 'Gelatina', 'Flan', 'Mousse', 'Pie de Limón',
-                'Cheesecake', 'Tiramisu', 'Brownie', 'Cupcakes', 'Donas',
-                'Torta de Chocolate', 'Torta de Vainilla', 'Torta de Zanahoria', 'Torta Selva Negra', 'Milhojas',
-                'Helado de Coco', 'Helado de Taxo', 'Helado de Mora', 'Helado de Guanábana', 'Raspados',
-                'Canguil Acaramelado', 'Algodón de Azúcar', 'Manzanas Acarameladas', 'Chocotejas', 'Turrones',
-                'Macarons', 'Croissant', 'Pan de Dulce', 'Galletas', 'Panelitas de Leche'
+                'Tres Leches', 'Espumilla del Parque', 'Helado de Paila', 'Higos con Queso', 'Quesadillas de Cayambe',
+                'Colada Morada con Guaguas', 'Arroz con Leche', 'Torta Negra', 'Suspiros de Ambato', 'Pristiños con Miel',
+                'Buñuelos con Miel de Panela', 'Cocada Negra', 'Melcocha de Baños', 'Nogada de Ibarra', 'Mazapán de Diablo',
+                'Manjar de Leche', 'Dulce de Babaco', 'Dulce de Guayaba', 'Mermelada de Mora', 'Higos Pasados',
+                'Pie de Limón', 'Cheesecake de Maracuyá', 'Brownie con Helado', 'Torta de Zanahoria', 'Torta Selva Negra',
+                'Helado de Taxo', 'Helado de Mora', 'Helado de Coco', 'Helado de Guanábana', 'Granizado de la Esquina',
+                'Manzana Acaramelada', 'Algodón de Azúcar', 'Chocoteja', 'Bizcochos de Cayambe', 'Roscas Enconfitadas',
+                'Quesillo con Miel', 'Yogur con Mora', 'Pan de Dulce', 'Galleta Amor', 'Manicho',
+                'Bon Bon Bum', 'Chupichupi', 'Trencito', 'Frescolita Helada', 'Cola con Pan',
+                'Maní Confitado', 'Champús', 'Morocho con Leche', 'Colada de Avena con Naranjilla', 'Canelazo'
             ],
             '⚽ Fútbol': [
-                'Barcelona SC', 'Emelec', 'Liga de Quito', 'Independiente del Valle', 'Aucas', 
-                'El Nacional', 'Deportivo Quito', 'Olmedo', 'Delfín', 'Macará',
-                'Universidad Católica', 'Técnico Universitario', 'Mushuc Runa', 'Orense', 'Guayaquil City',
-                'Messi', 'Cristiano Ronaldo', 'Neymar', 'Mbappé', 'Haaland',
-                'Mundial', 'Copa América', 'Eliminatorias', 'Champions League', 'Libertadores',
-                'Barcelona', 'Real Madrid', 'Manchester United', 'Liverpool', 'Bayern Munich',
-                'Enner Valencia', 'Antonio Valencia', 'Jefferson Montero', 'Agustín Delgado', 'Iván Kaviedes',
-                'Álex Aguinaga', 'Ulises de la Cruz', 'Christian Benítez', 'Felipe Caicedo', 'Michael Estrada',
-                'Penalty', 'Gol', 'Tiro Libre', 'Corner', 'Offside',
-                'VAR', 'Árbitro', 'Tarjeta Amarilla', 'Tarjeta Roja', 'Hat-trick'
+                'Barcelona SC', 'Emelec', 'Liga de Quito', 'Independiente del Valle', 'Aucas',
+                'El Nacional', 'Delfín', 'Macará', 'Universidad Católica', 'Técnico Universitario',
+                'Mushuc Runa', 'Orense', 'La Tri', 'Clásico del Astillero', 'Mundial 2022',
+                'Copa América', 'Eliminatorias', 'Libertadores', 'Sudamericana', 'Champions League',
+                'Enner Valencia', 'Antonio Valencia', 'Agustín Delgado', 'Iván Kaviedes', 'Álex Aguinaga',
+                'Christian Benítez', 'Moisés Caicedo', 'Pervis Estupiñán', 'Hernán Galíndez', 'Felipe Caicedo',
+                'Bolillo Gómez', 'Polo Carrera', 'Carlos Tenorio', 'Walter Ayoví', 'Pancho Cevallos',
+                'Ulises de la Cruz', 'Jefferson Montero', 'Michael Estrada', 'Damián Manso', 'Pelado Anangonó',
+                'Estadio Monumental', 'Estadio Capwell', 'Casa Blanca de LDU', 'Atahualpa', 'Mejenga del Barrio',
+                'Pelotita Pinchada', 'Cancha de Tierra', 'Gol Olímpico', 'Hat-trick', 'Penal Errado',
+                'Tarjeta Roja Injusta', 'VAR Mañoso', 'Tiro Libre Mágico', 'Hincha Furioso', 'Sur Oscura'
             ],
             '👻 Terror': [
-                'El Exorcista', 'It', 'The Ring', 'Scream', 'El Conjuro', 
-                'Insidious', 'Saw', 'Halloween', 'La Monja', 'La Llorona',
-                'Viernes 13', 'Chucky', 'The Grudge', 'Sinister', 'Annabelle',
-                'Paranormal Activity', 'Hereditary', 'The Witch', 'Get Out', 'A Quiet Place',
-                'El Aro', 'Pesadilla en Elm Street', 'Alien', 'The Shining', 'Carrie',
-                'Misery', 'Poltergeist', 'The Babadook', 'Midsommar', 'Us',
-                'Don\'t Breathe', 'The Descent', 'REC', 'Orphan', 'The Orphanage',
-                'Devil', 'Lights Out', 'Ouija', 'The Purge', 'Split',
-                'The Visit', 'Truth or Dare', 'Escape Room', 'Terrifier', 'Smile',
-                'M3GAN', 'Malignant', 'La Dama de Blanco', 'El Jinete Sin Cabeza', 'Zombies'
+                'La Llorona', 'La Caja Ronca', 'El Padre Almeida', 'Cantuña y el Diablo', 'El Gallo de la Catedral',
+                'El Tintín', 'La Tunda', 'El Riviel', 'El Sombrerón', 'El Duende del Río',
+                'La Mama Huaca', 'El Aya Huma', 'El Diablo Huma', 'La Vieja del Monte', 'El Cuco',
+                'El Hombre del Saco', 'La Dama Tapada', 'La Patasola', 'El Chuzalongo', 'La Bruja del Páramo',
+                'El Exorcista', 'It (Eso)', 'La Monja', 'Annabelle', 'El Conjuro',
+                'Chucky', 'Viernes 13', 'Halloween', 'Scream', 'Hereditary',
+                'A Quiet Place', 'The Ring', 'Insidious', 'Sinister', 'The Babadook',
+                'Get Out', 'Us', 'Midsommar', 'M3GAN', 'Smile',
+                'Saw', 'Terrifier', 'La Dama de Blanco', 'El Jinete Sin Cabeza', 'Zombies del Apocalipsis',
+                'Vampiros', 'Brujas de Salem', 'Cementerio Abandonado', 'Casa Embrujada', 'Sueño Paralítico'
             ],
             '🎬 Películas': [
-                'Titanic', 'Avatar', 'Avengers', 'Star Wars', 'Harry Potter',
+                'Titanic', 'Avatar', 'Avengers Endgame', 'Star Wars', 'Harry Potter',
                 'El Señor de los Anillos', 'Jurassic Park', 'Matrix', 'Inception', 'Interestelar',
-                'El Padrino', 'Forrest Gump', 'Pulp Fiction', 'Gladiador', 'Rocky',
-                'Rápidos y Furiosos', 'Volver al Futuro', 'Terminator', 'Spider-Man', 'Batman',
-                'Iron Man', 'Thor', 'Capitán América', 'Black Panther', 'Deadpool',
-                'Joker', 'Coco', 'Toy Story', 'Frozen', 'El Rey León',
-                'Shrek', 'Buscando a Nemo', 'Intensamente', 'Up', 'Moana',
-                'Encanto', 'Mi Villano Favorito', 'Madagascar', 'Kung Fu Panda', 'Los Increíbles',
-                'Top Gun', 'Mission Impossible', 'James Bond', 'Indiana Jones', 'Piratas del Caribe',
-                'Transformers', 'Godzilla', 'King Kong', 'Barbie', 'Oppenheimer'
+                'El Padrino', 'Forrest Gump', 'Gladiador', 'Rocky', 'Top Gun',
+                'Rápidos y Furiosos', 'Volver al Futuro', 'Spider-Man', 'Batman', 'Iron Man',
+                'Joker', 'Deadpool', 'Black Panther', 'Thor Ragnarok', 'Capitán América',
+                'Coco', 'Toy Story', 'Frozen', 'El Rey León', 'Shrek',
+                'Buscando a Nemo', 'Intensamente', 'Up', 'Moana', 'Encanto',
+                'Mi Villano Favorito', 'Madagascar', 'Kung Fu Panda', 'Los Increíbles', 'Ratatouille',
+                'Mission Impossible', 'James Bond', 'Indiana Jones', 'Piratas del Caribe', 'Transformers',
+                'Barbie', 'Oppenheimer', 'Ratas Ratones y Rateros', 'Qué Tan Lejos', 'A Tus Espaldas'
             ],
             '🎵 Música': [
-                // Artistas Latinos y Ecuatorianos
                 'Juan Fernando Velasco', 'Mirella Cesa', 'Verde 70', 'Rocola Bacalao', 'Sal y Mileto',
-                'Au D', 'Tanque Lleno', 'Policía', 'Cruks en Karnak', 'Danilo Parra',
+                'AU-D', 'Tanque Lleno', 'Daniel Páez', 'Pamela Cortés', 'Israel Brito',
+                'Julio Jaramillo', 'Carlota Jaramillo', 'Don Medardo y sus Players', 'Hermanos Núñez', 'Tres de la Habana',
+                'Tranzas', 'Cruks en Karnak', 'Karla Kanora', 'Pueblo Nuevo', 'Margarita Laso',
                 'Shakira', 'Bad Bunny', 'Karol G', 'J Balvin', 'Maluma',
-                'Daddy Yankee', 'Don Omar', 'Nicky Jam', 'Ozuna', 'Becky G',
-                // Artistas Internacionales
-                'Taylor Swift', 'Ed Sheeran', 'Ariana Grande', 'Bruno Mars', 'The Weeknd',
-                'Drake', 'Rihanna', 'Beyoncé', 'Justin Bieber', 'Lady Gaga',
-                // Géneros
-                'Salsa', 'Merengue', 'Bachata', 'Reggaeton', 'Cumbia',
-                'Rock', 'Pop', 'Hip Hop', 'Trap', 'Electrónica',
-                // Instrumentos
-                'Guitarra', 'Piano', 'Batería', 'Bajo', 'Saxofón',
-                'Trompeta', 'Violín', 'Flauta', 'Tambor', 'Maracas'
+                'Daddy Yankee', 'Don Omar', 'Nicky Jam', 'Ozuna', 'Anuel AA',
+                'Taylor Swift', 'Ed Sheeran', 'Bruno Mars', 'The Weeknd', 'Drake',
+                'Pasillo', 'Pasacalle', 'Albazo', 'Sanjuanito', 'Bomba del Chota',
+                'Yaraví', 'Tonada', 'Cumbia Sonidera', 'Salsa Choke', 'Bachata',
+                'Reggaeton Old School', 'Rondador', 'Bandolín', 'Charango', 'Pingullo'
+            ],
+            '🏘️ Personajes del Barrio': [
+                'La Suegra Metida', 'El Tío Borracho', 'La Tía Chismosa', 'El Cuñado Sabido', 'La Casera del Mercado',
+                'El Compadre Mañoso', 'La Comadre Bochinchera', 'El Primo Vago', 'La Prima Coqueta', 'El Sobrino Mimado',
+                'La Vecina Curiosa', 'El Vecino Ruidoso', 'El Tinterillo', 'El Cobrador del Bus', 'El Diablo Volante',
+                'La Doña del Hornado', 'El Lustrabotas', 'El Cuidacoches', 'El Limpiavidrios', 'La Vendedora de Frutas',
+                'El Pana del Barrio', 'El Sapo del Aula', 'El Pelado del Salón', 'El Mecánico del Sector', 'La Estilista del Barrio',
+                'El Pastor de la Iglesia', 'La Catequista', 'El Monaguillo', 'La Madrina Buena', 'El Padrino Tacaño',
+                'El Hermano Sermón', 'La Hermana Aleluya', 'El Pana de Farra', 'La Amiga del Alma', 'El Profe Estricto',
+                'La Profe Buena Onda', 'El Inspector del Cole', 'La Directora del Cole', 'El Mejor Amigo', 'El Falso Amigo',
+                'El Ex Tóxico', 'La Ex Loca', 'El Político Mentiroso', 'El Tramitador', 'La Señora de las Tarjetas',
+                'El Guardia del Edificio', 'El Conserje', 'El Mototaxista', 'La Tienda de la Esquina', 'El Dueño del Karaoke'
+            ],
+            '🧙 Cosas de la Abuelita': [
+                'Vaporub', 'Agua de Manzanilla', 'Limpia con Cuy', 'Mal de Ojo', 'Espanto',
+                'Mala Hora', 'Mal Aire', 'Limpia con Huevo', 'Agüita de Toronjil', 'Agua de Anís',
+                'Agua de Hierba Luisa', 'Hojas de Eucalipto', 'Té de Boldo', 'Penca Sábila', 'Vinagre con Sal',
+                'Manzanilla con Limón', 'Ortiga para el Pelo', 'Sangre de Drago', 'Uña de Gato', 'Horchata Lojana',
+                'Aguardiente con Limón', 'Agua Bendita', 'Estampita del Niño Divino', 'Rosario en la Pared', 'Sahumerio',
+                'Palo Santo', 'Ruda en la Puerta', 'Ramo Bendito', 'Velita a la Virgen', 'Escapulario',
+                'Caldo de Gallina para la Chuchaqui', 'Vicks en la Espalda', 'Aceite de Almendras', 'Bicarbonato con Limón', 'Ajo Crudo',
+                'Cebolla en la Mesita', 'Trapito con Trago', 'Mertiolate', 'Curita con Pollito', 'Termómetro de Mercurio',
+                'La Bendición de la Abuela', 'Te Curo el Mal Aire', 'Pasar el Huevo', 'Soplar Trago a la Cara', 'Limpia con Ortiga',
+                'Cinta Roja en la Muñeca', 'Tres Patadas para el Susto', 'Salar la Casa', 'Pomada Mosquito', 'Suero Casero'
+            ],
+            '📺 TV Ecuatoriana': [
+                'Mi Recinto', 'Vivos', 'Combate', 'BLN La Competencia', 'En Carne Propia',
+                'Compadre Garañón', 'Don Naza', 'Sharon La Hechicera', 'Delfín Quishpe', 'Tres Tristes Tigres',
+                'La Pareja Feliz', 'De Casa en Casa', 'En Contacto', 'TC al Despertar', 'Día a Día',
+                'Vamos con Todo', 'El Combo Amarillo', 'Soltero Sin Compromiso', 'La Tremebunda Corte', 'El Cholito',
+                'Andrea Tobar', 'Estefani Espín', 'Carlos Vera', 'Polo Baquerizo', 'Tobby el Perro',
+                'Carlos Michelena', 'David Reinoso', 'Flor María Palomeque', 'Marián Sabaté', 'Pancho Barona',
+                'Las Lojanitas', 'El Tape', 'El Cholo Camargo', 'Doña Rocío', 'El Bombón Asesino',
+                'Cabeza de Gato', '4 Patitas', 'A Calzón Quitado', 'La Toyota', 'Estas Secretarias',
+                'Caso Cerrado', 'Pasapalabra', 'Yo Me Llamo', 'Ecuador Tiene Talento', 'MasterChef Ecuador',
+                'Calle 7', 'El Cuarto Poder', 'Los Comediantes', 'Generaciones Encontradas', 'Sálvese Quien Pueda'
+            ],
+            '🇪🇨 Lugares de Ecuador': [
+                'Galápagos', 'Mitad del Mundo', 'Baños de Agua Santa', 'Otavalo', 'Montañita',
+                'Chimborazo', 'Cotopaxi', 'Cuenca', 'Quito Colonial', 'Guayaquil Malecón',
+                'Salinas', 'Atacames', 'Manta', 'Santa Elena', 'La Mariscal',
+                'La Ronda', 'Mindo', 'Tena', 'Puyo', 'Macas',
+                'Cuyabeno', 'Ingapirca', 'Pailón del Diablo', 'Quilotoa', 'Lagunas de Mojanda',
+                'Imbabura', 'Cayambe', 'Antisana', 'Iliniza', 'Sangay',
+                'Pichincha', 'Rumiñahui', 'Tungurahua', 'Misahuallí', 'Yasuní',
+                'Cuevas de Jumandy', 'Parque Nacional Cajas', 'Termas de Papallacta', 'Playa Los Frailes', 'Isla de la Plata',
+                'Canoa', 'Mompiche', 'Puerto López', 'Vilcabamba', 'Cojimíes',
+                'Same', 'Crucita', 'Olón', 'Ayampe', 'Plaza Foch'
             ]
         };
 
@@ -1818,6 +1893,13 @@
                 setCurrentRevealIndex(0);
                 setCurtainPosition(0);
                 setIsRevealed(false);
+
+                if (window.trackEvent) window.trackEvent('partida_iniciada', {
+                    modo: 'local',
+                    jugadores: finalOrder.length,
+                    impostores: numImpostors,
+                    categoria: finalTheme
+                });
             };
 
             // Manejo de la cortina interna - Siempre vuelve a bajar
@@ -2008,9 +2090,15 @@
                 if (activeImpostors === 0) {
                     setWinner('innocents');
                     setScreen('ended');
+                    if (window.trackEvent) window.trackEvent('partida_finalizada', {
+                        modo: 'local', ganador: 'inocentes', ronda: currentRound
+                    });
                 } else if (activeImpostors >= activeInnocents) {
                     setWinner('impostors');
                     setScreen('ended');
+                    if (window.trackEvent) window.trackEvent('partida_finalizada', {
+                        modo: 'local', ganador: 'impostores', ronda: currentRound
+                    });
                 } else {
                     setCurrentRound(currentRound + 1);
                     startPlayingPhase();
@@ -2285,6 +2373,9 @@
                                         <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
                                     </div>
                                     <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    <div className="footer-year" style={{marginTop: '6px'}}>
+                                        <a href="/privacidad.html" style={{color: '#fff', opacity: 0.8, textDecoration: 'underline'}}>Política de Privacidad</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2534,6 +2625,9 @@
                                         <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
                                     </div>
                                     <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    <div className="footer-year" style={{marginTop: '6px'}}>
+                                        <a href="/privacidad.html" style={{color: '#fff', opacity: 0.8, textDecoration: 'underline'}}>Política de Privacidad</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2609,6 +2703,9 @@
                                         <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
                                     </div>
                                     <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    <div className="footer-year" style={{marginTop: '6px'}}>
+                                        <a href="/privacidad.html" style={{color: '#fff', opacity: 0.8, textDecoration: 'underline'}}>Política de Privacidad</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2667,6 +2764,9 @@
                                         <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
                                     </div>
                                     <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    <div className="footer-year" style={{marginTop: '6px'}}>
+                                        <a href="/privacidad.html" style={{color: '#fff', opacity: 0.8, textDecoration: 'underline'}}>Política de Privacidad</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2863,6 +2963,9 @@
                                             <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
                                         </div>
                                         <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    <div className="footer-year" style={{marginTop: '6px'}}>
+                                        <a href="/privacidad.html" style={{color: '#fff', opacity: 0.8, textDecoration: 'underline'}}>Política de Privacidad</a>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -2879,11 +2982,18 @@
             const [playerName, setPlayerName] = useState('');
             const [inputCode, setInputCode] = useState('');
             const [roomCode, setRoomCode] = useState('');
+            const [proposedCode] = useState(() => generateRoomCode());
             const [room, setRoom] = useState(null);
             const [error, setError] = useState('');
             const [loading, setLoading] = useState(false);
             const [myVote, setMyVote] = useState(null);
+            const [onlineCurtainPos, setOnlineCurtainPos] = useState(0);
+            const [onlineDragging, setOnlineDragging] = useState(false);
+            const [onlineRevealed, setOnlineRevealed] = useState(false);
+            const [hasEverRevealed, setHasEverRevealed] = useState(false);
             const myPlayerId = useRef(getOrCreatePlayerId()).current;
+            const onlineDragStartY = useRef(0);
+            const onlineDragStartPos = useRef(0);
 
             const isAdmin = room?.adminId === myPlayerId;
             const me = room?.players?.[myPlayerId];
@@ -2914,7 +3024,7 @@
                 if (!playerName.trim()) { setError('Ingresa tu nombre'); return; }
                 setLoading(true); setError('');
                 try {
-                    const code = await fbCreateRoom(myPlayerId, playerName.trim());
+                    const code = await fbCreateRoom(myPlayerId, playerName.trim(), proposedCode);
                     setRoomCode(code);
                 } catch(e) { setError(e.message); }
                 setLoading(false);
@@ -2967,6 +3077,30 @@
             const handleLeave = () => {
                 if (roomCode) db.ref(`rooms/${roomCode}/players/${myPlayerId}`).remove();
                 setRoomCode(''); setRoom(null); setMyVote(null); setError('');
+            };
+
+            const handleOnlineCoverStart = (clientY) => {
+                if (onlineRevealed) return;
+                onlineDragStartY.current = clientY;
+                onlineDragStartPos.current = onlineCurtainPos;
+                setOnlineDragging(true);
+            };
+            const handleOnlineCoverMove = (clientY) => {
+                if (!onlineDragging || onlineRevealed) return;
+                const card = document.querySelector('.online-curtain-card');
+                if (!card) return;
+                const deltaY = onlineDragStartY.current - clientY;
+                const newPos = Math.max(0, Math.min(100, onlineDragStartPos.current + (deltaY / card.getBoundingClientRect().height) * 100));
+                setOnlineCurtainPos(newPos);
+            };
+            const handleOnlineCoverEnd = () => {
+                setOnlineDragging(false);
+                if (onlineCurtainPos > 50) { setOnlineRevealed(true); setHasEverRevealed(true); }
+                else setOnlineCurtainPos(0);
+            };
+            const handleOnlineToggleReveal = () => {
+                if (onlineRevealed) { setOnlineRevealed(false); setOnlineCurtainPos(0); }
+                else { setOnlineRevealed(true); setHasEverRevealed(true); }
             };
 
             /* ── Screens ── */
@@ -3076,55 +3210,98 @@
                             <p>Tu rol secreto</p>
                         </div>
 
-                        <div className="online-reveal-card">
-                            {!me.hasRevealed ? (
-                                <>
-                                    {me.isImpostor ? (
-                                        <>
-                                            <div className="secret-label">Tu rol es</div>
-                                            <div className="word-display impostor">😈 IMPOSTOR</div>
-                                            <p style={{fontSize:'0.92em', color:'#666', padding:'0 10px', marginTop:10}}>
-                                                Descubre la palabra sin ser descubierto
-                                            </p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="secret-label">Tu palabra es</div>
-                                            <div className="word-display">{room.secretWord}</div>
-                                            <div className="theme-tag">{room.selectedTheme}</div>
-                                        </>
-                                    )}
-                                    <button className="btn btn-primary" style={{marginTop:20}}
+                        {!me.hasRevealed ? (
+                            <>
+                                <div className="reveal-card-container">
+                                    <div className="reveal-card online-curtain-card">
+                                        {/* Contenido secreto debajo */}
+                                        <div className="secret-content-card">
+                                            {me.isImpostor ? (
+                                                <>
+                                                    <div className="secret-label">Tu rol es</div>
+                                                    <div className="word-display impostor">😈 IMPOSTOR</div>
+                                                    <p style={{fontSize:'0.92em', color:'#666', padding:'0 10px', marginTop:10}}>
+                                                        Descubre la palabra sin ser descubierto
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="secret-label">Tu palabra es</div>
+                                                    <div className="word-display">{room.secretWord}</div>
+                                                    <div className="theme-tag">{room.selectedTheme}</div>
+                                                </>
+                                            )}
+                                        </div>
+                                        {/* Cortina */}
+                                        <div
+                                            className={`cover-overlay ${!onlineDragging && !onlineRevealed ? 'released' : ''}`}
+                                            style={{
+                                                transform: `translateY(-${onlineRevealed ? 100 : onlineCurtainPos}%)`,
+                                                transition: onlineRevealed
+                                                    ? 'transform 0.5s cubic-bezier(0.4,0,0.2,1)'
+                                                    : (!onlineDragging ? 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' : 'none')
+                                            }}
+                                            onMouseDown={e => handleOnlineCoverStart(e.clientY)}
+                                            onMouseMove={e => onlineDragging && handleOnlineCoverMove(e.clientY)}
+                                            onMouseUp={handleOnlineCoverEnd}
+                                            onMouseLeave={handleOnlineCoverEnd}
+                                            onTouchStart={e => handleOnlineCoverStart(e.touches[0].clientY)}
+                                            onTouchMove={e => handleOnlineCoverMove(e.touches[0].clientY)}
+                                            onTouchEnd={e => { e.preventDefault(); handleOnlineCoverEnd(); }}
+                                        >
+                                            <div className="cover-content">
+                                                <div className="cover-player-name">{me.name}</div>
+                                                <div className="cover-turn-label">tu rol secreto</div>
+                                                <div className="swipe-icon">☝️</div>
+                                                <div className="swipe-text">Mantén presionado</div>
+                                                <div className="swipe-instruction">y desliza hacia arriba</div>
+                                                <div className="reveal-progress">
+                                                    <div className="reveal-progress-fill"
+                                                        style={{width: `${onlineRevealed ? 100 : onlineCurtainPos}%`}} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="next-button-container">
+                                    <button
+                                        className={`reveal-toggle-btn ${onlineRevealed ? 'showing' : ''}`}
+                                        onClick={handleOnlineToggleReveal}
+                                    >
+                                        {onlineRevealed ? '🙈 Ocultar' : '👁️ Mostrar'}
+                                    </button>
+                                    <button className="btn btn-primary"
+                                        disabled={!hasEverRevealed}
                                         onClick={() => db.ref(`rooms/${roomCode}/players/${myPlayerId}/hasRevealed`).set(true)}>
                                         Entendido ✓
                                     </button>
-                                </>
-                            ) : (
-                                <>
-                                    <div style={{fontSize:'3em', marginBottom:12}}>✅</div>
-                                    <h3 style={{color:'#333', marginBottom:8}}>¡Listo!</h3>
-                                    <p style={{color:'#666'}}>
-                                        {revealedCount}/{allPlayers.length} jugadores confirmados
+                                </div>
+                            </>
+                        ) : (
+                            <div className="online-reveal-card">
+                                <div style={{fontSize:'3em', marginBottom:12}}>✅</div>
+                                <h3 style={{color:'#333', marginBottom:8}}>¡Listo!</h3>
+                                <p style={{color:'#666'}}>
+                                    {revealedCount}/{allPlayers.length} jugadores confirmados
+                                </p>
+                                {!allRevealed && (
+                                    <p style={{color:'#aaa', fontSize:'0.85em', marginTop:8}}>
+                                        <span className="pulse-dot" />
+                                        Esperando a los demás...
                                     </p>
-                                    {!allRevealed && (
-                                        <p style={{color:'#aaa', fontSize:'0.85em', marginTop:8}}>
-                                            <span className="pulse-dot" />
-                                            Esperando a los demás...
-                                        </p>
-                                    )}
-                                    {allRevealed && isAdmin && (
-                                        <button className="btn btn-secondary" style={{marginTop:15}} onClick={handleStartPlaying}>
-                                            Comenzar Juego 🎮
-                                        </button>
-                                    )}
-                                    {allRevealed && !isAdmin && (
-                                        <p style={{color:'#667eea', fontWeight:600, marginTop:8}}>
-                                            ¡Todos listos! Esperando al admin...
-                                        </p>
-                                    )}
-                                </>
-                            )}
-                        </div>
+                                )}
+                                {allRevealed && isAdmin && (
+                                    <button className="btn btn-secondary" style={{marginTop:15}} onClick={handleStartPlaying}>
+                                        Comenzar Juego 🎮
+                                    </button>
+                                )}
+                                {allRevealed && !isAdmin && (
+                                    <p style={{color:'#667eea', fontWeight:600, marginTop:8}}>
+                                        ¡Todos listos! Esperando al admin...
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 );
             };
@@ -3324,6 +3501,15 @@
                         <div className="card">
                             <h2>Crear Sala</h2>
                             <p style={{color:'#666', fontSize:'0.88em', marginBottom:14}}>Serás el administrador de la partida</p>
+                            <div style={{textAlign:'center', marginBottom:16}}>
+                                <div style={{fontSize:'0.72em', color:'#999', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6}}>Código de sala</div>
+                                <div style={{
+                                    fontSize:'2em', fontWeight:900, letterSpacing:10, color:'#667eea',
+                                    background:'#f0f0ff', borderRadius:12, padding:'10px 20px',
+                                    display:'inline-block', fontVariantNumeric:'tabular-nums'
+                                }}>{proposedCode}</div>
+                                <div style={{fontSize:'0.75em', color:'#aaa', marginTop:6}}>Comparte este código mientras llenas tu nombre</div>
+                            </div>
                             <div className="input-group">
                                 <input type="text" placeholder="Tu nombre" value={playerName}
                                     onChange={e => { setPlayerName(e.target.value); setError(''); }}
@@ -3404,6 +3590,9 @@
                                     <a href="mailto:jnavarretejimenez98@gmail.com">jnavarretejimenez98@gmail.com</a>
                                 </div>
                                 <div className="footer-year">© 2025 - Todos los derechos reservados</div>
+                                    <div className="footer-year" style={{marginTop: '6px'}}>
+                                        <a href="/privacidad.html" style={{color: '#fff', opacity: 0.8, textDecoration: 'underline'}}>Política de Privacidad</a>
+                                    </div>
                             </div>
                         </div>
                     </div>
